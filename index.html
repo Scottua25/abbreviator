@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Short Description Builder (Local CSV)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Abbreviate long part descriptions using a local CSV of approved terms. ALL CAPS, 30-char limit, preserves trailing 4-digit date codes."/>
+  <style>
+    :root { --fg:#111; --muted:#666; --panel:#f7f7f7; --border:#ddd; }
+    body { color:var(--fg); font: 14px system-ui, sans-serif; max-width: 820px; margin: 2rem auto; padding: 0 1rem; }
+    h1 { font-size: 20px; margin: 0 0 .75rem; }
+    .badge { display:inline-block; padding:2px 6px; border-radius: 4px; background:#eee; margin-left:6px; font-size: 12px;}
+    textarea { width: 100%; height: 140px; }
+    input[type="text"] { width: 5rem; }
+    .out { white-space: pre-wrap; font-weight: 600; padding:.75rem; background:var(--panel); border:1px solid var(--border); border-radius:8px; min-height:2.5rem;}
+    .row { display: grid; gap: 0.5rem; margin-top: 1rem; }
+    .grid { display: grid; grid-template-columns: 1fr auto; gap: 0.75rem; align-items: center; }
+    .hint { color:var(--muted); font-size: 12px; }
+    .warn { color:#994a00; font-weight:600; }
+    .btns { display:flex; gap:.5rem; align-items:center; }
+    button { padding: .5rem .8rem; border-radius: 8px; border: 1px solid var(--border); background:var(--panel); cursor:pointer; }
+    button:active { transform: translateY(1px); }
+    details { margin-top:1rem; }
+    code { background:#eee; padding:.1rem .3rem; border-radius:4px; }
+  </style>
+</head>
+<body>
+  <h1>Short Description Builder <span class="badge">ALL CAPS • 30 chars • Local CSV</span></h1>
+
+  <div class="row">
+    <label for="longText">Long Description</label>
+    <textarea id="longText" placeholder="Paste the long description here…"></textarea>
+  </div>
+
+  <div class="grid">
+    <div class="btns">
+      <button id="convertBtn">Convert</button>
+      <button id="copyBtn" title="Copy result to clipboard">Copy</button>
+    </div>
+    <label>Max length:
+      <input id="maxLen" type="text" value="30" />
+    </label>
+  </div>
+
+  <div class="row">
+    <label>Short Description</label>
+    <div class="out" id="shortOut">—</div>
+    <div class="hint" id="meta">Length: 0 • Status: —</div>
+  </div>
+
+  <details>
+    <summary>Data source & format</summary>
+    <div class="hint">
+      This page loads <code>abbreviations.csv</code> from the same folder. Update that file to change behavior.<br/>
+      Required headers: <strong>Term,Abbreviation</strong> (case-sensitive).<br/>
+      If a Term cell contains multiple synonyms, separate them with <code>;</code>, <code>/</code>, <code>,</code>, or <code>|</code>. Commas are fine when the field is quoted in CSV.
+    </div>
+  </details>
+
+<script>
+/* ===========================================================
+   CONFIG
+   =========================================================== */
+const LOCAL_CSV_PATH = "./abbreviations.csv";   // must live next to index.html
+const REQUIRED_HEADERS = { term: "Term", abbr: "Abbreviation" };
+
+/* ===========================================================
+   Robust RFC-4180-ish CSV Parser (handles quotes and commas)
+   =========================================================== */
+function parseCSV(text) {
+  const rows = [];
+  let i = 0, s = text, len = s.length;
+  let row = [], col = '';
+  let inQuotes = false;
+
+  while (i < len) {
+    const ch = s[i];
+
+    if (inQuotes) {
+      if (ch === '"') {
+        if (i + 1 < len && s[i + 1] === '"') { // escaped quote ""
+          col += '"'; i += 2; continue;
+        } else {
+          inQuotes = false; i++; continue;
+        }
+      } else {
+        col += ch; i++; continue;
+      }
+    } else {
+      if (ch === '"') { inQuotes = true; i++; continue; }
+      if (ch === ',') { row.push(col); col = ''; i++; continue; }
+      if (ch === '\r') { i++; continue; }  // ignore CR
+      if (ch === '\n') { row.push(col); rows.push(row); row = []; col = ''; i++; continue; }
+      col += ch; i++; continue;
+    }
+  }
+  // push last cell/row
+  row.push(col);
+  rows.push(row);
+
+  // trim trailing empty last row caused by ending newline(s)
+  while (rows.length && rows[rows.length-1].length === 1 && rows[rows.length-1][0] === '') {
+    rows.pop();
+  }
+
+  return rows;
+}
+
+/* ===========================================================
+   Load & normalize rules
+   =========================================================== */
+async function fetchCSV(url) {
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) throw new Error("Fetch failed: " + res.status);
+  return await res.text();
+}
+
+function rowsToMapping(rows) {
+  if (!rows.length) throw new Error("CSV is empty.");
+  const header = rows[0].map(h => h.trim());
+  const idxTerm = header.indexOf(REQUIRED_HEADERS.term);
+  const idxAbbr = header.indexOf(REQUIRED_HEADERS.abbr);
+  if (idxTerm === -1 || idxAbbr === -1) {
+    throw new Error(`Missing required headers. Need "${REQUIRED_HEADERS.term}" and "${REQUIRED_HEADERS.abbr}".`);
+  }
+
+  // Build records
+  const recs = [];
+  for (let r = 1; r < rows.length; r++) {
+    const row = rows[r];
+    if (!row || row.length < 2) continue;
+    const term = (row[idxTerm] || "").trim();
+    const abbr = (row[idxAbbr] || "").trim();
+    if (!term || !abbr) continue;
+    recs.push({ term, abbr });
+  }
+  return recs;
+}
+
+// Split synonyms in Term on ; / , |  → expand to separate rules
+function expandTerms(records) {
+  const out = [];
+  for (const r of records) {
+    const parts = r.term.split(/[;\/,\|]/).map(s => s.trim()).filter(Boolean);
+    for (const p of parts) {
+      out.push({ term: p.toUpperCase(), abbr: r.abbr.toUpperCase() });
+    }
+  }
+  // Longest term first (so "CARBON STEEL" beats "STEEL")
+  out.sort((a,b) => b.term.length - a.term.length);
+  // Dedupe
+  const seen = new Set(), res = [];
+  for (const x of out) {
+    const key = x.term + "→" + x.abbr;
+    if (!seen.has(key)) { seen.add(key); res.push(x); }
+  }
+  return res;
+}
+
+/* ===========================================================
+   Core transform: ALL CAPS, whole-word replacement,
+   preserve trailing 4-digit date code
+   =========================================================== */
+function buildShort(longText, rules, maxLen) {
+  maxLen = Number.isFinite(maxLen) && maxLen > 0 ? Math.floor(maxLen) : 30;
+
+  // Uppercase & normalize punctuation/spaces
+  let raw = (longText || "").toString().toUpperCase();
+  let normalized = raw
+    .replace(/\u00A0/g, " ")
+    .replace(/[\r\n]+/g, " ")
+    .replace(/[.,;:\/()\-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  // Detect trailing 4-digit token (date code)
+  let tokens = normalized.split(" ").filter(Boolean);
+  let dateCode = null;
+  if (tokens.length && /^\d{4}$/.test(tokens[tokens.length - 1])) {
+    dateCode = tokens.pop();
+  }
+
+  // Apply whole-word replacements (pad with spaces on both ends)
+  let base = tokens.join(" ").trim();
+  base = (" " + base + " ").replace(/\s+/g, " ");
+  for (const r of rules) {
+    const full = " " + r.term + " ";
+    const abbr = " " + r.abbr + " ";
+    if (base.indexOf(full) !== -1) {
+      base = base.split(full).join(abbr);
+    }
+  }
+  base = base.replace(/\s+/g, " ").trim();
+
+  // Reattach date code at end, trimming base if needed to meet maxLen
+  let finalStr;
+  if (dateCode) {
+    const spacer = base ? " " : "";
+    const needed = base.length + spacer.length + dateCode.length;
+    if (needed > maxLen) {
+      const allowedBase = Math.max(0, maxLen - spacer.length - dateCode.length);
+      base = base.slice(0, allowedBase).trimEnd();
+    }
+    finalStr = (base ? base + " " : "") + dateCode;
+  } else {
+    finalStr = base.length > maxLen ? base.slice(0, maxLen) : base;
+  }
+
+  const status = finalStr.length <= maxLen ? "OK" : "REVIEW";
+  return { short: finalStr, length: finalStr.length, status };
+}
+
+/* ===========================================================
+   UI glue
+   =========================================================== */
+let RULES = [];
+
+async function init() {
+  try {
+    const csvText = await fetchCSV(LOCAL_CSV_PATH);
+    const parsed = parseCSV(csvText);
+    const recs = rowsToMapping(parsed);
+    RULES = expandTerms(recs);
+  } catch (e) {
+    console.error(e);
+    alert("Failed to load abbreviations.csv. Make sure it's next to index.html and has headers Term,Abbreviation.\n\n" + e.message);
+  }
+}
+
+document.getElementById("convertBtn").addEventListener("click", () => {
+  const longText = document.getElementById("longText").value;
+  const maxLen = parseInt(document.getElementById("maxLen").value, 10) || 30;
+  const { short, length, status } = buildShort(longText, RULES, maxLen);
+  document.getElementById("shortOut").textContent = short || "—";
+  document.getElementById("meta").innerHTML = `Length: ${length} • Status: ${status}` +
+    (status === "REVIEW" ? ` <span class="warn">— truncated to meet limit</span>` : "");
+});
+
+document.getElementById("copyBtn").addEventListener("click", async () => {
+  const out = document.getElementById("shortOut").textContent || "";
+  try {
+    await navigator.clipboard.writeText(out);
+    const btn = document.getElementById("copyBtn");
+    const old = btn.textContent;
+    btn.textContent = "Copied!";
+    setTimeout(() => (btn.textContent = old), 1000);
+  } catch {
+    alert("Copy failed — select the output and press Ctrl+C.");
+  }
+});
+
+init();
+</script>
+</body>
+</html>
