@@ -321,7 +321,7 @@ appendix,APPX
 application,APPL
 application list,AL
 applied,APLD
-appliqué,APLQ
+appliquÃ©,APLQ
 approach,APRCH
 approval,APPVL
 approve,APPV
@@ -7263,7 +7263,7 @@ yield strength,YS
 end of y,
 zero temperature coefficient,ZTC
 zinc yellow chromate,ZY
-silicon controlled rectifier (see semiconductor controlled rectifier),—
+silicon controlled rectifier (see semiconductor controlled rectifier),Â—
 half dog point,1/2DP
 half-hard,1/2H
 half-round,1/2RD
@@ -7634,7 +7634,7 @@ allowance parts list,APL
 automatic phase lock,APL
 airplane,APL
 applied,APLD
-appliqué,APLQ
+appliquÃ©,APLQ
 apothecary,APOTH
 appearance,APP
 apparatus,APPAR
@@ -8188,3 +8188,14 @@ Wrench ,WR
 Yellow,Y
 Zinc Phosphate,ZP
 Zinc Plated,ZP
+intermittent pilot with damper LP,PIDL
+Series 1,S1
+Series 2,S2
+Series 3,S3
+Series 4,S4
+Series 5,S5
+Series 6,S6
+Series 7,S7
+Series 8,S8
+Series 9,S9
+Series 10,S10
