@@ -143,12 +143,13 @@ function expandTerms(records) {
   for (const r of records) {
     const parts = r.term.split(/[;\/,\|]/).map(s => s.trim()).filter(Boolean);
     for (const p of parts) {
-      out.push({ term: p.toUpperCase(), abbr: r.abbr.toUpperCase() });
+      // Normalize to single spaces, ALL CAPS
+      const clean = p.replace(/\s+/g, " ").toUpperCase();
+      out.push({ term: clean, abbr: r.abbr.toUpperCase() });
     }
   }
-  // Longest term first (so "CARBON STEEL" beats "STEEL")
-  out.sort((a,b) => b.term.length - a.term.length);
-  // Dedupe
+  // Sort by length DESC, then alphabetically to stabilize
+  out.sort((a, b) => b.term.length - a.term.length || a.term.localeCompare(b.term));
   const seen = new Set(), res = [];
   for (const x of out) {
     const key = x.term + "→" + x.abbr;
@@ -184,12 +185,12 @@ function buildShort(longText, rules, maxLen) {
   let base = tokens.join(" ").trim();
   base = (" " + base + " ").replace(/\s+/g, " ");
   for (const r of rules) {
-    const full = " " + r.term + " ";
-    const abbr = " " + r.abbr + " ";
-    if (base.indexOf(full) !== -1) {
-      base = base.split(full).join(abbr);
-    }
-  }
+  const full = " " + r.term + " ";
+  const abbr = " " + r.abbr + " ";
+  // Ensure numeric tokens stay intact
+  const pattern = new RegExp(" " + r.term.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&") + " ", "g");
+  base = base.replace(pattern, abbr);
+}
   base = base.replace(/\s+/g, " ").trim();
 
   // Reattach date code at end, trimming base if needed to meet maxLen
