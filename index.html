@@ -107,10 +107,13 @@ button:active { transform: translateY(1px); }
 <body>
   <h1>Short Description Builder <span class="badge">ALL CAPS • 30 chars • Local CSV</span></h1>
 
-  <div class="row">
-    <label for="longText">Long Description</label>
-    <textarea id="longText" placeholder="Paste the long description here…"></textarea>
+<div class="row">
+  <label for="longText">Long Description</label>
+  <textarea id="longText" placeholder="Paste the long description here…"></textarea>
+  <div class="hint">
+    Tip: Use a semicolon (<code>;</code>) to separate phrases if you want them matched as individual terms.
   </div>
+</div>
 
   <div class="grid">
     <div class="btns">
@@ -128,14 +131,13 @@ button:active { transform: translateY(1px); }
     <div class="hint" id="meta">Length: 0 • Status: —</div>
   </div>
 
-  <details>
-    <summary>Data source & format</summary>
-    <div class="hint">
-      This page loads <code>abbreviations.csv</code> from the same folder. Update that file to change behavior.<br/>
-      Required headers: <strong>Term,Abbreviation</strong> (case-sensitive).<br/>
-      If a Term cell contains multiple synonyms, separate them with <code>;</code>, <code>/</code>, <code>,</code>, or <code>|</code>. Commas are fine when the field is quoted in CSV.
-    </div>
-  </details>
+<details>
+  <summary>Data source & format</summary>
+  <div class="hint">
+    This page loads <code>abbreviations.csv</code> from the same folder. Update that file to change behavior.<br/>
+    Required headers: <strong>Term,Abbreviation</strong> (case-sensitive).
+  </div>
+</details>
 
 <script>
 /* ===========================================================
