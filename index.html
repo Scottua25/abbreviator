@@ -16,6 +16,16 @@
   --panel: #ffffff;
 }
 
+body.dark {
+  --bg: #1f2937;
+  --fg: #f9fafb;
+  --muted: #9ca3af;
+  --accent: #3b82f6;
+  --accent-hover: #60a5fa;
+  --border: #374151;
+  --panel: #111827;
+}
+    
 body {
   background: var(--bg);
   color: var(--fg);
@@ -23,6 +33,7 @@ body {
   max-width: 900px;
   margin: 2rem auto;
   padding: 0 1rem;
+  transition: background 0.3s, color 0.3s;
 }
 
 h1 {
@@ -106,6 +117,12 @@ button:active { transform: translateY(1px); }
 </head>
 <body>
   <h1>Short Description Builder <span class="badge">ALL CAPS • 30 chars • Local CSV</span></h1>
+  
+<div style="float:right; margin-top:-2.2rem;">
+  <button id="themeToggle" style="background:none; border:1px solid var(--border); border-radius:6px; padding:.3rem .6rem; cursor:pointer;">
+    🌙 Dark
+  </button>
+</div>
 
 <div class="row">
   <label for="longText">Long Description</label>
