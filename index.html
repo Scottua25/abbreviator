@@ -350,6 +350,26 @@ document.getElementById("copyBtn").addEventListener("click", async () => {
 });
 
 init();
+
+// ===== Theme toggle =====
+const themeBtn = document.getElementById("themeToggle");
+function setTheme(dark) {
+  if (dark) {
+    document.body.classList.add("dark");
+    themeBtn.textContent = "☀️ Light";
+    localStorage.setItem("theme", "dark");
+  } else {
+    document.body.classList.remove("dark");
+    themeBtn.textContent = "🌙 Dark";
+    localStorage.setItem("theme", "light");
+  }
+}
+themeBtn.addEventListener("click", () => {
+  setTheme(!document.body.classList.contains("dark"));
+});
+// Load saved preference
+setTheme(localStorage.getItem("theme") === "dark");
+
 </script>
 </body>
 </html>
