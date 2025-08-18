@@ -112,6 +112,20 @@ button:active { transform: translateY(1px); }
   align-items: center;
   margin-top: .75rem;
 }
+    
+.toggle-btn {
+  background: var(--panel);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: .3rem .6rem;
+  font: inherit;
+  cursor: pointer;
+  transition: background .2s, color .2s;
+}
+.toggle-btn:hover {
+  background: var(--border);
+}
 
   </style>
 </head>
@@ -119,9 +133,7 @@ button:active { transform: translateY(1px); }
   <h1>Short Description Builder <span class="badge">ALL CAPS • 30 chars • Local CSV</span></h1>
   
 <div style="float:right; margin-top:-2.2rem;">
-  <button id="themeToggle" style="background:none; border:1px solid var(--border); border-radius:6px; padding:.3rem .6rem; cursor:pointer;">
-    🌙 Dark
-  </button>
+  <button id="themeToggle" class="toggle-btn">🌙 Dark</button>
 </div>
 
 <div class="row">
