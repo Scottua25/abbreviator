@@ -2,386 +2,62 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Short Description Builder (Local CSV)</title>
+  <title>ECO Field Candidate Tool</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Abbreviate long part descriptions using a local CSV of approved terms. ALL CAPS, 30-char limit, preserves trailing 4-digit date codes."/>
+  <meta name="description" content="Suggest ECO short descriptions and Propel classification candidates from approved reference lists." />
   <style>
-:root {
-  --bg: #f9fafb;
-  --fg: #1f2937;
-  --muted: #6b7280;
-  --accent: #2563eb;
-  --accent-hover: #1d4ed8;
-  --border: #e5e7eb;
-  --panel: #ffffff;
-}
-
-body.dark {
-  --bg: #1f2937;
-  --fg: #f9fafb;
-  --muted: #9ca3af;
-  --accent: #3b82f6;
-  --accent-hover: #60a5fa;
-  --border: #374151;
-  --panel: #111827;
-}
-    
-body {
-  background: var(--bg);
-  color: var(--fg);
-  font: 15px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  max-width: 900px;
-  margin: 2rem auto;
-  padding: 0 1rem;
-  transition: background 0.3s, color 0.3s;
-}
-
-h1 {
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
-}
-
-.badge {
-  font-size: 0.75rem;
-  font-weight: 600;
-  background: var(--accent);
-  color: #fff;
-  border-radius: 9999px;
-  padding: 2px 10px;
-  margin-left: 8px;
-}
-
-.card {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.1);
-}
-
-label {
-  font-weight: 600;
-  margin-bottom: .25rem;
-  display: block;
-}
-
-textarea, input[type="text"] {
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font: inherit;
-  resize: vertical;
-}
-
-textarea {
-  min-height: 120px;
-}
-
-button {
-  background: var(--accent);
-  color: #fff;
-  font-weight: 600;
-  border: none;
-  border-radius: 8px;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  transition: background .2s;
-}
-button:hover { background: var(--accent-hover); }
-button:active { transform: translateY(1px); }
-
-#shortOut {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 0.75rem;
-  font-weight: 700;
-  font-size: 1.1rem;
-  white-space: pre-wrap;
-  min-height: 2.5rem;
-}
-
-.hint { color: var(--muted); font-size: 0.85rem; margin-top: 0.25rem; }
-.warn { color: #b45309; font-weight: 600; }
-
-.grid {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: .75rem;
-}
-    
-.toggle-btn {
-  background: var(--panel);
-  color: var(--fg);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: .3rem .6rem;
-  font: inherit;
-  cursor: pointer;
-  transition: background .2s, color .2s;
-}
-.toggle-btn:hover {
-  background: var(--border);
-}
-
+    :root{--bg:#f9fafb;--fg:#1f2937;--muted:#6b7280;--accent:#2563eb;--accent-hover:#1d4ed8;--border:#e5e7eb;--panel:#fff;--good:#047857;--browse:#92400e} body.dark{--bg:#1f2937;--fg:#f9fafb;--muted:#9ca3af;--accent:#3b82f6;--accent-hover:#60a5fa;--border:#374151;--panel:#111827} body{background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:1100px;margin:2rem auto;padding:0 1rem} h1{font-size:1.55rem;margin-bottom:.25rem}.sub{color:var(--muted);margin-top:0}.card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin:1rem 0;box-shadow:0 1px 3px rgba(0,0,0,.06)} label{font-weight:650;display:block;margin-bottom:.25rem} textarea,input{width:100%;box-sizing:border-box;padding:.55rem .75rem;border:1px solid var(--border);border-radius:8px;font:inherit;background:var(--panel);color:var(--fg)} textarea{min-height:130px} button{background:var(--accent);color:#fff;font-weight:650;border:0;border-radius:8px;padding:.55rem 1rem;cursor:pointer}button:hover{background:var(--accent-hover)}.toggle-btn{float:right;background:var(--panel);color:var(--fg);border:1px solid var(--border)}.grid{display:grid;grid-template-columns:1fr 110px;gap:1rem;align-items:end}.btns{display:flex;gap:.5rem;margin-top:.75rem}.out{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:.85rem;font-weight:800;font-size:1.15rem;min-height:2.5rem;letter-spacing:.02em}.hint,.meta,small,em{color:var(--muted)} code{background:var(--bg);padding:.1rem .25rem;border-radius:4px}.columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}.columns section{border:1px solid var(--border);border-radius:10px;padding:.75rem}.columns h3{margin:.1rem 0 .5rem}.field-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem}.field-browse{min-width:48%;max-width:62%}.field-browse summary{cursor:pointer;color:var(--accent);font-weight:650;text-align:right}.field-browse input{margin:.5rem 0}.field-browse ol{max-height:260px;overflow:auto;margin:.25rem 0 0;padding-left:1.25rem}.score{float:right;background:var(--good);color:white;border-radius:999px;padding:.05rem .45rem;font-size:.8rem}.browse .score{background:var(--browse)} li{margin:.45rem 0}@media(max-width:800px){.grid,.columns{grid-template-columns:1fr}.toggle-btn{float:none;margin-bottom:.5rem}.field-head{display:block}.field-browse{max-width:none}}
   </style>
 </head>
 <body>
-  <h1>Short Description Builder </h1>
-  
-<div style="float:right; margin-top:-2.2rem;">
-  <button id="themeToggle" class="toggle-btn">🌙 Dark</button>
-</div>
+  <button id="themeToggle" class="toggle-btn">Dark</button>
+  <h1>ECO Field Candidate Tool</h1>
+  <p class="sub">Paste a normal description. The tool suggests a 30-character short description plus likely Component/Product classification fields.</p>
 
-<div class="row">
-  <label for="longText">Long Description</label>
-  <textarea id="longText" placeholder="Paste the long description here…"></textarea>
-  <div class="hint">
-    Tip: Use a semicolon (<code>;</code>) to separate phrases if you want them matched as individual terms.
-  </div>
-</div>
-
-  <div class="grid">
-    <div class="btns">
-      <button id="convertBtn">Convert</button>
-      <button id="copyBtn" title="Copy result to clipboard">Copy</button>
+  <div class="card">
+    <label for="longText">Description</label>
+    <textarea id="longText" placeholder="Example: Natural gas valve adapter 1 inch…"></textarea>
+    <div class="grid">
+      <div class="btns"><button id="convertBtn">Suggest</button><button id="copyBtn">Copy short description</button></div>
+      <div class="hint"><b>Short limit:</b> 30 characters</div>
     </div>
-    <label>Max length:
-      <input id="maxLen" type="text" value="30" />
-    </label>
   </div>
 
-  <div class="row">
-    <label>Short Description</label>
-    <div class="out" id="shortOut">—</div>
-    <div class="hint" id="meta">Length: 0 • Status: —</div>
+  <div class="card">
+    <label>Most likely abbreviated short description</label>
+    <div id="shortOut" class="out">Loading…</div>
+    <div id="meta" class="meta">—</div>
   </div>
 
-<details>
-  <summary>Data source & format</summary>
-  <div class="hint">
-    This page loads <code>abbreviations.csv</code> from the same folder. Update that file to change behavior.<br/>
-    Required headers: <strong>Term,Abbreviation</strong> (case-sensitive).
+  <div class="card">
+    <h2>Abbreviation matches</h2>
+    <ul id="matches"><li>Loading…</li></ul>
   </div>
-</details>
 
+  <div class="card">
+    <h2>Likely field candidates</h2>
+    <div id="fields" class="columns">Loading…</div>
+    <p class="hint">Scores are helper rankings, not authority. Use each field's collapsed Browse list when the suggested candidates do not surface the right option.</p>
+  </div>
+
+  <details class="card">
+    <summary>Sources and rule order</summary>
+    <p class="hint">Short-description abbreviations follow ECO_SOP_Committee_Proposal_v1.0.md section 8: WM/PK Released Abbreviations first, then ASME Y14.38. Field candidates are ranked against exported Component Group, Component Type, Product Group, and Product Type reference lists.</p>
+  </details>
+
+<script src="./data/eco-reference-data-global.js"></script>
+<script src="./app.browser.js"></script>
 <script>
-/* ===========================================================
-   CONFIG
-   =========================================================== */
-const LOCAL_CSV_PATH = "./abbreviations.csv";   // must live next to index.html
-const REQUIRED_HEADERS = { term: "Term", abbr: "Abbreviation" };
-
-/* ===========================================================
-   Robust RFC-4180-ish CSV Parser (handles quotes and commas)
-   =========================================================== */
-function parseCSV(text) {
-  const rows = [];
-  let i = 0, s = text, len = s.length;
-  let row = [], col = '';
-  let inQuotes = false;
-
-  while (i < len) {
-    const ch = s[i];
-
-    if (inQuotes) {
-      if (ch === '"') {
-        if (i + 1 < len && s[i + 1] === '"') { // escaped quote ""
-          col += '"'; i += 2; continue;
-        } else {
-          inQuotes = false; i++; continue;
-        }
-      } else {
-        col += ch; i++; continue;
-      }
-    } else {
-      if (ch === '"') { inQuotes = true; i++; continue; }
-      if (ch === ',') { row.push(col); col = ''; i++; continue; }
-      if (ch === '\r') { i++; continue; }  // ignore CR
-      if (ch === '\n') { row.push(col); rows.push(row); row = []; col = ''; i++; continue; }
-      col += ch; i++; continue;
-    }
-  }
-  // push last cell/row
-  row.push(col);
-  rows.push(row);
-
-  // trim trailing empty last row caused by ending newline(s)
-  while (rows.length && rows[rows.length-1].length === 1 && rows[rows.length-1][0] === '') {
-    rows.pop();
-  }
-
-  return rows;
-}
-
-/* ===========================================================
-   Load & normalize rules
-   =========================================================== */
-async function fetchCSV(url) {
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) throw new Error("Fetch failed: " + res.status);
-  return await res.text();
-}
-
-function rowsToMapping(rows) {
-  if (!rows.length) throw new Error("CSV is empty.");
-  const header = rows[0].map(h => h.trim());
-  const idxTerm = header.indexOf(REQUIRED_HEADERS.term);
-  const idxAbbr = header.indexOf(REQUIRED_HEADERS.abbr);
-  if (idxTerm === -1 || idxAbbr === -1) {
-    throw new Error(`Missing required headers. Need "${REQUIRED_HEADERS.term}" and "${REQUIRED_HEADERS.abbr}".`);
-  }
-
-  // Build records
-  const recs = [];
-  for (let r = 1; r < rows.length; r++) {
-    const row = rows[r];
-    if (!row || row.length < 2) continue;
-    const term = (row[idxTerm] || "").trim();
-    const abbr = (row[idxAbbr] || "").trim();
-    if (!term || !abbr) continue;
-    recs.push({ term, abbr });
-  }
-  return recs;
-}
-
-// Split synonyms in Term on ; / , |  → expand to separate rules
-function expandTerms(records) {
-  const out = [];
-  for (const r of records) {
-    const parts = r.term.split(/[;\/,\|]/).map(s => s.trim()).filter(Boolean);
-    for (const p of parts) {
-      // Normalize to single spaces, ALL CAPS
-      const clean = p.replace(/\s+/g, " ").toUpperCase();
-      out.push({ term: clean, abbr: r.abbr.toUpperCase() });
-    }
-  }
-  // Sort by length DESC, then alphabetically to stabilize
-  out.sort((a, b) => b.term.length - a.term.length || a.term.localeCompare(b.term));
-  const seen = new Set(), res = [];
-  for (const x of out) {
-    const key = x.term + "→" + x.abbr;
-    if (!seen.has(key)) { seen.add(key); res.push(x); }
-  }
-  return res;
-}
-
-/* ===========================================================
-   Core transform: ALL CAPS, whole-word replacement,
-   preserve trailing 4-digit date code
-   =========================================================== */
-function buildShort(longText, rules, maxLen) {
-  maxLen = Number.isFinite(maxLen) && maxLen > 0 ? Math.floor(maxLen) : 30;
-
-  // Uppercase & normalize punctuation/spaces
-  let raw = (longText || "").toString().toUpperCase();
-  let normalized = raw
-    .replace(/\u00A0/g, " ")
-    .replace(/[\r\n]+/g, " ")
-    .replace(/[.,;:\/()\-]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-
-  // Detect trailing 4-digit token (date code)
-  let tokens = normalized.split(" ").filter(Boolean);
-  let dateCode = null;
-  if (tokens.length && /^\d{4}$/.test(tokens[tokens.length - 1])) {
-    dateCode = tokens.pop();
-  }
-
-  // Apply whole-word replacements (pad with spaces on both ends)
-  let base = tokens.join(" ").trim();
-  base = (" " + base + " ").replace(/\s+/g, " ");
-  for (const r of rules) {
-  const full = " " + r.term + " ";
-  const abbr = " " + r.abbr + " ";
-  // Ensure numeric tokens stay intact
-  const pattern = new RegExp(" " + r.term.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&") + " ", "g");
-  base = base.replace(pattern, abbr);
-}
-  base = base.replace(/\s+/g, " ").trim();
-
-  // Reattach date code at end, trimming base if needed to meet maxLen
-  let finalStr;
-  if (dateCode) {
-    const spacer = base ? " " : "";
-    const needed = base.length + spacer.length + dateCode.length;
-    if (needed > maxLen) {
-      const allowedBase = Math.max(0, maxLen - spacer.length - dateCode.length);
-      base = base.slice(0, allowedBase).trimEnd();
-    }
-    finalStr = (base ? base + " " : "") + dateCode;
-  } else {
-    finalStr = base.length > maxLen ? base.slice(0, maxLen) : base;
-  }
-
-  const status = finalStr.length <= maxLen ? "OK" : "REVIEW";
-  return { short: finalStr, length: finalStr.length, status };
-}
-
-/* ===========================================================
-   UI glue
-   =========================================================== */
-let RULES = [];
-
-async function init() {
+  const themeBtn = document.getElementById('themeToggle');
+  function setTheme(dark){document.body.classList.toggle('dark', dark); themeBtn.textContent = dark ? 'Light' : 'Dark'; localStorage.setItem('theme', dark ? 'dark':'light');}
+  themeBtn.addEventListener('click',()=>setTheme(!document.body.classList.contains('dark'))); setTheme(localStorage.getItem('theme') === 'dark');
   try {
-    const csvText = await fetchCSV(LOCAL_CSV_PATH);
-    const parsed = parseCSV(csvText);
-    const recs = rowsToMapping(parsed);
-    RULES = expandTerms(recs);
-  } catch (e) {
-    console.error(e);
-    alert("Failed to load abbreviations.csv. Make sure it's next to index.html and has headers Term,Abbreviation.\n\n" + e.message);
+    wireUi(window.ECO_REFERENCE_DATA);
+  } catch (err) {
+    document.getElementById('shortOut').textContent = 'Data load failed';
+    document.getElementById('meta').textContent = err.message;
+    console.error(err);
   }
-}
-
-document.getElementById("convertBtn").addEventListener("click", () => {
-  const longText = document.getElementById("longText").value;
-  const maxLen = parseInt(document.getElementById("maxLen").value, 10) || 30;
-  const { short, length, status } = buildShort(longText, RULES, maxLen);
-  document.getElementById("shortOut").textContent = short || "—";
-  document.getElementById("meta").innerHTML = `Length: ${length} • Status: ${status}` +
-    (status === "REVIEW" ? ` <span class="warn">— truncated to meet limit</span>` : "");
-});
-
-document.getElementById("copyBtn").addEventListener("click", async () => {
-  const out = document.getElementById("shortOut").textContent || "";
-  try {
-    await navigator.clipboard.writeText(out);
-    const btn = document.getElementById("copyBtn");
-    const old = btn.textContent;
-    btn.textContent = "Copied!";
-    setTimeout(() => (btn.textContent = old), 1000);
-  } catch {
-    alert("Copy failed — select the output and press Ctrl+C.");
-  }
-});
-
-init();
-
-// ===== Theme toggle =====
-const themeBtn = document.getElementById("themeToggle");
-function setTheme(dark) {
-  if (dark) {
-    document.body.classList.add("dark");
-    themeBtn.textContent = "☀️ Light";
-    localStorage.setItem("theme", "dark");
-  } else {
-    document.body.classList.remove("dark");
-    themeBtn.textContent = "🌙 Dark";
-    localStorage.setItem("theme", "light");
-  }
-}
-themeBtn.addEventListener("click", () => {
-  setTheme(!document.body.classList.contains("dark"));
-});
-// Load saved preference
-setTheme(localStorage.getItem("theme") === "dark");
-
 </script>
 </body>
 </html>
